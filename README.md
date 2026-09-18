@@ -28,9 +28,10 @@ it simply is not executed there.
 Standard library only. Python 3.9+.
 
 ```bash
-python app.py              # http://localhost:8000
+python app.py               # http://localhost:8000
 python app.py --port 5000
-python app.py --demo       # runs the rules engine in the console, no server
+python app.py --demo        # runs the rules engine in the console, no server
+python app.py --prompt MTR-001   # prints the filled RTOCF prompt for a case, no server
 ```
 
 To deploy the Python version, use a host that runs Python processes
@@ -44,6 +45,7 @@ To deploy the Python version, use a host that runs Python processes
 | GET | `/api/health` | Liveness check |
 | GET | `/api/cases` | All synthetic cases |
 | GET | `/api/cases/<case_id>` | One case plus its analysis |
+| GET | `/api/prompt/<case_id>` | The filled RTOCF prompt for a case (Stage 1, Section 4) |
 | POST | `/api/analyze` | Runs the rules engine on submitted values |
 
 ```bash
@@ -65,3 +67,18 @@ how far outside it falls, as a fraction of the range width:
 Flag severity then drives a suggested reviewer queue. Every response carries
 `release_state: BLOCKED_PENDING_HUMAN_APPROVAL` — the engine drafts and flags,
 it never diagnoses, approves, or releases.
+
+## The RTOCF prompt
+
+`app.py` also includes the final V3 RTOCF prompt (Role, Task, Output,
+Constraints, Format) from the case's prompt-engineering exercise, as a
+runnable template rather than only text in the write-up.
+`build_rtocf_prompt(case)` fills it with a case's structured report data
+and returns the exact prompt text that would be sent to a generative model
+as the user message.
+
+The dashboard's own summaries come from the deterministic rules engine
+above — no API key, no per-call cost, runs fully offline. The RTOCF prompt
+is the artifact that *would* drive a real generative call in a production
+version; `--prompt <case_id>` and `/api/prompt/<case_id>` let you inspect
+it directly.
